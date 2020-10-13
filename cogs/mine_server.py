@@ -1,11 +1,13 @@
-from asyncio import create_subprocess_shell, subprocess
+from asyncio import create_subprocess_shell, subprocess, sleep
 from subprocess import CREATE_NEW_PROCESS_GROUP
-from os import chdir, kill, system, remove
-from discord.ext import commands, tasks
-from utils import permissions, data
 from signal import CTRL_C_EVENT
-from asyncio import sleep
+
+from os import chdir, kill, system, remove
+
+from discord.ext import commands, tasks
 from discord import File
+
+from utils import permissions, data
 
 
 # Converts strings into booleans:
@@ -31,16 +33,10 @@ class MinecraftAdmin(commands.Cog):
         # Tasks:
         self.send_stream.start()
 
-    # Cog Listener:
-    @commands.Cog.listener()
-    async def on_member_join(self):
-        pass
-
-    # Unload:
+    # Unload the tasks:
     def cog_unload(self):
         self.send_stream.cancel()
 
-    # Start Server:
     @commands.command()
     async def server_start(self, ctx, stream: str = '0'):
         # Check if the server is running:
@@ -138,17 +134,17 @@ class MinecraftAdmin(commands.Cog):
 
         except UnicodeDecodeError as u:
             print('[Unicode]: Error while decoding bytes. {}'.format(u))
-        except TypeError as u:
-            print('[TypeError]: {}'.format(u))
+        except TypeError as t:
+            print('[TypeError]: {}'.format(t))
         except Exception as e:
             print('[Error]: Error while transmitting stdout. {}'.format(e))
 
     @send_stream.before_loop
     async def before_send(self):
-        print('[Stream Sender]: Waiting for the bot to load...')
+        print('[Stream]: Waiting for the bot to load...')
         await self.bot.wait_until_ready()
 
-    # Turns the stream:
+    # Switches the stream state:
     @commands.command()
     async def turn_stream(self, ctx, value: str):
         # Performs the necessary checks:
@@ -204,13 +200,15 @@ class MinecraftAdmin(commands.Cog):
                 with open('{}\\server.properties'.format(self.config['server_dir']), encoding='utf-8', mode='r+'):
                     for id in self.config['valid_channels']:
                         channel = self.bot.get_channel(id)
+
+                        # Tries to send the 'server.properties' file:
                         try:
                             await channel.send(file=File('{}\\server.properties'
                                                          .format(self.config['server_dir']), 'Properties.txt'))
                         except Exception as e:
-                            print('[FileError]: {}'.format(e))
-            except:
-                print('Oh no.. Where is server.properties?')
+                            print('[Error]: {}'.format(e))
+            except Exception as e:
+                print('[Error]: {}'.format(e))
 
     # Modify server.properties:
     @commands.command()
@@ -242,20 +240,31 @@ class MinecraftAdmin(commands.Cog):
         with open(self.config['temp_stream'], encoding='utf-8', mode='r+'):
             for id in self.config['valid_channels']:
                 channel = self.bot.get_channel(id)
+
+                # Checks if there is a valid channel:
+                if not channel:
+                    return
+
+                # Try to send the file:
                 try:
                     await channel.send(file=File(self.config['temp_stream'], 'Stream.txt'))
                 except Exception as e:
-                    print('[FileError]: {}'.format(e))
+                    print('[Error]: {}'.format(e))
 
     # Reset the message:
     @commands.command()
     async def bring_stream(self, ctx):
-        self.message = None
-        await ctx.send('Brought the console back down!, {}'.format(ctx.message.author.mention))
+        self.initial_check(ctx)
+
+        if self.message is not None:
+            self.message = None
+            await ctx.send('Brought the console back down!, {}'.format(ctx.message.author.mention))
+        else:
+            await ctx.send('I don\'t think the server or the stream are turned on.')
 
     # Saves the current stream:
     def save_stream(self):
-        # Change back to the bot directory just in case:
+        # Change back to the bot directory (just in case):
         chdir(self.config['bot_dir'])
 
         try:
@@ -265,13 +274,15 @@ class MinecraftAdmin(commands.Cog):
             temp = open(self.config['temp_stream'], 'w+')
             temp.write(self.reply + '\n')
             temp.close()
+        finally:
+            print('[Stream]: Something went wrong while trying to save the stream.')
 
     # Deletes the current stream:
     def delete_stream(self):
         try:
             remove(self.config['temp_stream'])
-        except:
-            print('[Stream]: Something went wrong while trying to delete the stream.')
+        except Exception as e:
+            print('[Stream]: Something went wrong while trying to delete the stream. {}'.format(e))
 
 
 def setup(bot):
