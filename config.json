@@ -1,0 +1,19 @@
+{
+    "token": "Your_Secret_Token",
+
+    "prefix": ">",
+
+    "owners": [10000000000, 10000000000],
+    "valid_channels": [10000000000, 10000000000],
+    "admins": [10000000000],
+
+    "ignored_cogs": ["__init__.py"],
+
+    "server_dir": "The\\Server\\Directory",
+    "bot_dir": "The\\Bot\\Directory",
+
+    "temp_stream": "logs\\stream\\temp_stream.txt",
+    "error_dir": "logs\\errors\\errors.txt",
+
+    "server_memory": "5120"
+}
