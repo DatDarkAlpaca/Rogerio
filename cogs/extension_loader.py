@@ -8,11 +8,6 @@ class ExtensionLoader(commands.Cog):
         self.config = get('config.json')
         self.bot = bot
 
-    # Cog Listener:
-    @commands.Cog.listener()
-    async def on_member_join(self):
-        pass
-
     # Load All Possible Extensions:
     def load_extensions(self):
         print('-= Cogs =-')

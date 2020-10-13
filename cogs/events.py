@@ -55,7 +55,7 @@ class Events(commands.Cog):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = datetime.utcnow()
 
-        # Indicate that the bot has successfully booted up
+        # Indicates that the bot has been successfully booted up:
         print(f'Ready: {self.bot.user} | Servers: {len(self.bot.guilds)}')
 
 

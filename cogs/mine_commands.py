@@ -5,39 +5,39 @@ class MinecraftCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # Say as 'name' Command:
+    # Minecraft "Tellraw" with a custom name:
     @commands.command()
     async def say_as(self, ctx, name: str, *args):
         msg = ' '.join(args)
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'tellraw @a ["<{}> {}"]'.format(name, msg))
 
-    # Say as 'name' Command:
+    # Minecraft "Say":
     @commands.command()
     async def say(self, ctx, *args):
         msg = ' '.join(args)
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'say {}"]'.format(msg))
 
-    # List Players Command:
+    # Minecraft "List":
     @commands.command()
     async def list(self, ctx):
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'list')
 
-    # List Players Command:
+    # Minecraft "Reload" server:
     @commands.command()
     async def reload(self, ctx):
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'reload')
 
-    # Teleport Player Command:
+    # Minecraft "Teleport":
     @commands.command()
     async def tp(self, ctx, arg0: str, arg1: str):
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'tp {} {}'.format(arg0, arg1))
 
-    # Give Command:
+    # Minecraft "Give":
     @commands.command()
     async def give(self, ctx, name: str, item: str, amount: str):
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'give {} {} {}'.format(name, item, amount))
 
-    # Get Position Command:
+    # Internal Data Getter [WIP]:
     @commands.command()
     async def _get(self, ctx, target: str, *args):
         arg = ' '.join(args)
@@ -46,24 +46,24 @@ class MinecraftCommands(commands.Cog):
         if arg == 'position':
             await self.get_player_position(ctx, target)
 
-    # [Overloaded] Summon Command (Position):
+    # Minecraft "Summon" at position:
     @commands.command()
     async def summon(self, ctx, entity: str, x: str, y: str, z: str, nbt: str):
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'summon {} {} {} {} {}'.format(entity, x, y, z, nbt))
 
-    # [Overloaded] Summon Command (Player Position):
+    # Minecraft "Summon" at target's position [WIP]:
     @commands.command()
     async def summon(self, ctx, entity: str, to_player: str):
         (x, y, z) = self.get_player_position(ctx, to_player)
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'summon {} {} {} {}'.format(entity, x, y, z))
 
-    # [Overloaded] Summon Amount Command (Position):
+    # Minecraft "Summon" at position 'amount' times:
     @commands.command()
     async def summon_for(self, ctx, entity: str, x: str, y: str, z: str, nbt: str, amount: int):
         for ent in range(amount):
             await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'summon {} {} {} {} {}'.format(entity, x, y, z, nbt))
 
-    # [Overloaded] Summon Amount Command (Player):
+    # Minecraft "Summon" at player's position 'amount' times [WIP]:
     @commands.command()
     async def summon_for(self, ctx, entity: str, to_player: str, amount: int):
         (x, y, z) = self.get_player_position(ctx, to_player)
@@ -72,7 +72,7 @@ class MinecraftCommands(commands.Cog):
 
     # -=-=-= :  Custom Execute Helpers :  =-=-=-=- #
 
-    # Retrieves the position of the player using data tags:
+    # Retrieves the player's position using its internal data:
     async def get_player_position(self, ctx, target: str):
         # Executes the data command:
         await self.bot.get_cog('MinecraftAdmin').execute(ctx, 'data get entity {} Pos'.format(target))

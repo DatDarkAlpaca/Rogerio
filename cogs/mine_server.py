@@ -1,11 +1,13 @@
-from asyncio import create_subprocess_shell, subprocess
+from asyncio import create_subprocess_shell, subprocess, sleep
 from subprocess import CREATE_NEW_PROCESS_GROUP
-from os import chdir, kill, system, remove
-from discord.ext import commands, tasks
-from utils import permissions, data
 from signal import CTRL_C_EVENT
-from asyncio import sleep
+
+from os import chdir, kill, system, remove
+
+from discord.ext import commands, tasks
 from discord import File
+
+from utils import permissions, data
 
 
 # Converts strings into booleans:
@@ -31,16 +33,10 @@ class MinecraftAdmin(commands.Cog):
         # Tasks:
         self.send_stream.start()
 
-    # Cog Listener:
-    @commands.Cog.listener()
-    async def on_member_join(self):
-        pass
-
-    # Unload:
+    # Unload the tasks:
     def cog_unload(self):
         self.send_stream.cancel()
 
-    # Start Server:
     @commands.command()
     async def server_start(self, ctx, stream: str = '0'):
         # Check if the server is running:
@@ -270,8 +266,8 @@ class MinecraftAdmin(commands.Cog):
     def delete_stream(self):
         try:
             remove(self.config['temp_stream'])
-        except:
-            print('[Stream]: Something went wrong while trying to delete the stream.')
+        except Exception as e:
+            print('[Stream]: Something went wrong while trying to delete the stream. {}'.format(e))
 
 
 def setup(bot):
