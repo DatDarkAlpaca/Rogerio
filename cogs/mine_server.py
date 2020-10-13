@@ -2,12 +2,13 @@ from asyncio import create_subprocess_shell, subprocess, sleep
 from subprocess import CREATE_NEW_PROCESS_GROUP
 from signal import CTRL_C_EVENT
 
-from os import chdir, kill, system, remove
-
 from discord.ext import commands, tasks
 from discord import File
 
 from utils import permissions, data
+from utils.stream import *
+
+from os import kill, system
 
 
 # Converts strings into booleans:
@@ -87,7 +88,7 @@ class MinecraftAdmin(commands.Cog):
         self.running, self.turned_on = False, False
 
         # Delete the temporary stream file:
-        self.delete_stream()
+        delete_stream(self.config)
 
         # Kill the java process:
         kill(self.server_subproc.pid, CTRL_C_EVENT)
@@ -115,7 +116,7 @@ class MinecraftAdmin(commands.Cog):
                     self.turned_on = True
 
                 # Appends the current stream's line to a temporary file if there is no command using the folder:
-                self.save_stream()
+                save_stream(self.config, self.reply)
 
             if self.enabled_read:
                 # Check if the reply is empty:
@@ -178,7 +179,7 @@ class MinecraftAdmin(commands.Cog):
 
         await ctx.send('Executed command: {}'.format(cmd))
 
-    # -=-=-= :  Helper Methods and Stream Methods :  =-=-=-=- #
+    # -=-=-= :  Helper Methods :  =-=-=-=- #
 
     # Checks whether the server is truly turned on:
     @commands.command()
@@ -229,7 +230,9 @@ class MinecraftAdmin(commands.Cog):
         if not self.running:
             return
 
-    # Send the current stream:
+    # -=-=-= :  Stream Methods :  =-=-=-=- #
+
+    # Sends the current stream:
     @commands.command()
     async def retrieve_stream(self, ctx):
         self.initial_check(ctx)
@@ -251,7 +254,7 @@ class MinecraftAdmin(commands.Cog):
                 except Exception as e:
                     print('[Error]: {}'.format(e))
 
-    # Reset the message:
+    # Resets the message:
     @commands.command()
     async def bring_stream(self, ctx):
         self.initial_check(ctx)
@@ -261,28 +264,6 @@ class MinecraftAdmin(commands.Cog):
             await ctx.send('Brought the console back down!, {}'.format(ctx.message.author.mention))
         else:
             await ctx.send('I don\'t think the server or the stream are turned on.')
-
-    # Saves the current stream:
-    def save_stream(self):
-        # Change back to the bot directory (just in case):
-        chdir(self.config['bot_dir'])
-
-        try:
-            with open(self.config['temp_stream'], 'a') as temp:
-                temp.write(self.reply + '\n')
-        except:
-            temp = open(self.config['temp_stream'], 'w+')
-            temp.write(self.reply + '\n')
-            temp.close()
-        finally:
-            print('[Stream]: Something went wrong while trying to save the stream.')
-
-    # Deletes the current stream:
-    def delete_stream(self):
-        try:
-            remove(self.config['temp_stream'])
-        except Exception as e:
-            print('[Stream]: Something went wrong while trying to delete the stream. {}'.format(e))
 
 
 def setup(bot):

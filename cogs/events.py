@@ -1,6 +1,6 @@
 from discord.ext.commands import errors
 from discord.ext import commands
-from datetime import datetime
+from datetime import datetime, date
 from utils import data
 
 
@@ -12,6 +12,13 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
+        # Logging the error:
+        try:
+            with open(self.config['error_dir'], mode='a') as f:
+                f.write('{} : {} \n'.format(date.today(), err))
+        except Exception as e:
+            print('[Error]: {}'.format(e))
+
         if isinstance(err, errors.MissingRequiredArgument) or isinstance(err, errors.BadArgument):
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
             await ctx.send_help(helper)
@@ -54,9 +61,7 @@ class Events(commands.Cog):
     async def on_ready(self):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = datetime.utcnow()
-
-        # Indicates that the bot has been successfully booted up:
-        print(f'Ready: {self.bot.user} | Servers: {len(self.bot.guilds)}')
+        print('Ready: {} | Servers: {}'.format(self.bot.user, len(self.bot.guilds)))
 
 
 def setup(bot):
