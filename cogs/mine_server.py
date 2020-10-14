@@ -54,10 +54,10 @@ class MinecraftAdmin(commands.Cog):
             chdir(self.config['server_dir'])
 
             # Open the subprocess:
-            m = self.config['server_memory']
-            self.server_subproc = await create_subprocess_shell('java -Xmx{}M -Xms{}M -jar server.jar nogui'.format(m, m),
-                                                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                                stdin=subprocess.PIPE, cwd=self.config['server_dir'],
+            java_cmd = self.config['java_command']
+            self.server_subproc = await create_subprocess_shell(java_cmd, stdout=subprocess.PIPE,
+                                                                stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+                                                                cwd=self.config['server_dir'],
                                                                 creationflags=CREATE_NEW_PROCESS_GROUP)
             # Send a little message:
             if not string_to_bool(stream):
@@ -69,11 +69,14 @@ class MinecraftAdmin(commands.Cog):
         # Change cwd back to the bot directory:
         chdir(self.config['bot_dir'])
 
-    # Stops the server via minecraft commands, then closes the processes:
+    # Stops the server via minecraft commands, then closes the process:
     @commands.command()
     async def server_close(self, ctx):
         # Close the server:
         await self.execute(ctx, 'stop')
+
+        # TODO: Find a way to wait the entire subprocess stop its execution rather than waiting ten seconds..
+        await sleep(delay=10)
 
         # Close the process:
         await self.server_abrupt(ctx)
@@ -90,11 +93,11 @@ class MinecraftAdmin(commands.Cog):
         # Delete the temporary stream file:
         delete_stream(self.config)
 
-        # Kill the java process:
+        # Kill the subprocess with a signal and the java.exe process:
         kill(self.server_subproc.pid, CTRL_C_EVENT)
         system("taskkill /f /im java.exe")
 
-        # Clear the process:
+        # Clear the subprocess holder:
         self.server_subproc = None
 
         await ctx.send('Rogerio closed the server, {}! :)'.format(ctx.message.author.mention))
@@ -103,8 +106,6 @@ class MinecraftAdmin(commands.Cog):
     async def send_stream(self):
         try:
             if self.running:
-
-                # Check if the subprocess's stdout is available:
                 if not self.server_subproc.stdout:
                     return
 
@@ -112,17 +113,14 @@ class MinecraftAdmin(commands.Cog):
                 data_out = await self.server_subproc.stdout.readline()
                 self.reply = data_out.decode().strip()
 
+                # Reply that represents the end of the 'loading phase' of the server:
                 if 'For help, type "help"' in self.reply:
                     self.turned_on = True
 
-                # Appends the current stream's line to a temporary file if there is no command using the folder:
+                # Appends the current stream's line to a temporary file:
                 save_stream(self.config, self.reply)
 
-            if self.enabled_read:
-                # Check if the reply is empty:
-                if not self.reply:
-                    return
-
+            if self.enabled_read and self.reply:
                 for id in self.config['valid_channels']:
                     channel = self.bot.get_channel(id)
 
@@ -130,15 +128,15 @@ class MinecraftAdmin(commands.Cog):
                     if self.message is None and channel is not None:
                         self.message = await channel.send(self.reply)
                     elif self.message is not None:
-                        await sleep(0.2)
+                        await sleep(0.05)
                         await self.message.edit(content=self.reply)
 
         except UnicodeDecodeError as u:
-            print('[Unicode]: Error while decoding bytes. {}'.format(u))
+            print('[Unicode]: {}'.format(u))
         except TypeError as t:
             print('[TypeError]: {}'.format(t))
         except Exception as e:
-            print('[Error]: Error while transmitting stdout. {}'.format(e))
+            print('[Error]: {}'.format(e))
 
     @send_stream.before_loop
     async def before_send(self):
@@ -174,12 +172,11 @@ class MinecraftAdmin(commands.Cog):
             return
 
         cmd = ' '.join(args)
-
         self.server_subproc.stdin.write((cmd + '\n').encode())
 
-        await ctx.send('Executed command: {}'.format(cmd))
+        await ctx.send('Command written: {}'.format(cmd))
 
-    # -=-=-= :  Helper Methods :  =-=-=-=- #
+    # -=-=-= :  Helper Commands :  =-=-=-=- #
 
     # Checks whether the server is truly turned on:
     @commands.command()
@@ -202,12 +199,8 @@ class MinecraftAdmin(commands.Cog):
                     for id in self.config['valid_channels']:
                         channel = self.bot.get_channel(id)
 
-                        # Tries to send the 'server.properties' file:
-                        try:
-                            await channel.send(file=File('{}\\server.properties'
-                                                         .format(self.config['server_dir']), 'Properties.txt'))
-                        except Exception as e:
-                            print('[Error]: {}'.format(e))
+                        await channel.send(file=File('{}\\server.properties'
+                                                     .format(self.config['server_dir']), 'Properties.txt'))
             except Exception as e:
                 print('[Error]: {}'.format(e))
 
@@ -216,45 +209,39 @@ class MinecraftAdmin(commands.Cog):
     async def modify_properties(self, ctx, argument: str, *args):
         properties_path = '{}\\server.properties'.format(self.config['server_dir'])
         value = ' '.join(args)
+
+        # Checks the argument passed and modifies it in the file:
         data.modify_existing_argument(properties_path, argument, value)
 
-        await ctx.send('Modified the argument {} for you, {}'.format(argument, ctx.message.author.mention))
+        await ctx.send('Modified the argument {} for you, {}!'.format(argument, ctx.message.author.mention))
 
     # Checks the permissions and whether the server is turned on:
     def initial_check(self, ctx):
-        # Check whether the user has enough permissions.
-        if not permissions.is_owner(ctx) or not permissions.is_admin(ctx):
+        if not permissions.is_owner(ctx) or not permissions.is_admin(ctx) or not self.running:
             return
 
-        # Check if the server is running:
-        if not self.running:
-            return
-
-    # -=-=-= :  Stream Methods :  =-=-=-=- #
+    # -=-=-= :  Stream Commands :  =-=-=-=- #
 
     # Sends the current stream:
     @commands.command()
     async def retrieve_stream(self, ctx):
         self.initial_check(ctx)
 
-        # Change back to the bot directory just in case:
+        # Change back to the bot directory (just in case):
         chdir(self.config['bot_dir'])
 
         with open(self.config['temp_stream'], encoding='utf-8', mode='r+'):
             for id in self.config['valid_channels']:
                 channel = self.bot.get_channel(id)
 
-                # Checks if there is a valid channel:
-                if not channel:
-                    return
+                if channel:
+                    try:
+                        # Try to send the file:
+                        await channel.send(file=File(self.config['temp_stream'], 'Stream.txt'))
+                    except Exception as e:
+                        print('[Error]: {}'.format(e))
 
-                # Try to send the file:
-                try:
-                    await channel.send(file=File(self.config['temp_stream'], 'Stream.txt'))
-                except Exception as e:
-                    print('[Error]: {}'.format(e))
-
-    # Resets the message:
+    # Resets the message editing position:
     @commands.command()
     async def bring_stream(self, ctx):
         self.initial_check(ctx)

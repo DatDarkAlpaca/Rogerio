@@ -15,39 +15,42 @@ def get(filename):
 
 # Modify JSON file:
 def modify_existing_argument(filename, argument: str, *args):
-    # Saves all the possible arguments:
-    argument_list = []
-    with open(filename, 'r') as f:
-        data = f.readlines()
-        for arg in data:
-            arg = arg.split('=', 1)[0]
-            argument_list.append(arg)
+    try:
+        # Saves all the possible arguments:
+        argument_list = []
+        with open(filename, 'r') as f:
+            data = f.readlines()
+            for arg in data:
+                arg = arg.split('=', 1)[0]
+                argument_list.append(arg)
 
-    # Modifies the arguments:
-    with open(filename, 'r+') as f:
-        line_list = f.readlines()
-        line_to_modify = None
+        # Modifies the arguments:
+        with open(filename, 'r+') as f:
+            line_list = f.readlines()
+            line_to_modify = None
 
-        # Search for the line number of the argument:
-        for line_number, line in enumerate(line_list):
-            if line.startswith('#') or line.isspace():  # Comments
-                pass
-            else:
-                arg, value = line.split('=')
-                new_value = ' '.join(args)
+            # Search for the line number of the argument:
+            for line_number, line in enumerate(line_list):
+                if line.startswith('#') or line.isspace():  # Comments
+                    pass
+                else:
+                    arg, value = line.split('=')
+                    new_value = ' '.join(args)
 
-                if argument == arg:
-                    line_to_modify = line_number
-                    break
+                    if argument == arg:
+                        line_to_modify = line_number
+                        break
 
-        # Modify this line:
-        if line_to_modify is not None:
-            line_list[line_to_modify] = arg + '=' + new_value + '\n'
+            # Modify this line:
+            if line_to_modify is not None:
+                line_list[line_to_modify] = arg + '=' + new_value + '\n'
 
-            # Save:
-            file = open(filename, 'w')
-            file.writelines(line_list)
-            file.close()
+                # Save:
+                file = open(filename, 'w')
+                file.writelines(line_list)
+                file.close()
+    except Exception as e:
+        print('[ModifyArgument]: {}'.format(e))
 
 
 # Traceback Maker:
