@@ -4,18 +4,18 @@ A Discord bot that turns on my minecraft server when I'm away.
 To add this to your server, simply add "config.json" and add the following:
 
 {
-    "token": "NzM1MjQxMjE5NjYzMzMxNDMw.XxdYvg.sdkSuHhMCrgsjMC1YadLVliSn50",
+    "token": "Your_Secret_Token",
 
-    "prefix": "> ",
+    "prefix": "!",
 
-    "owners": [334838632236187651, 535230947570876439],
-    "valid_channels": [764302712593580043, 277560397895041024],
-    "admins": [354686028147195915],
+    "owners": [10000000000000, 10000101010010101],
+    "valid_channels": [9417535875879524, 1000000000000],
+    "admins": [1111111111111111],
 
     "ignored_cogs": ["__init__.py"],
 
-    "server_dir": "C:\\Users\\paulo\\Documents\\Projects\\Minecraft Stuff\\Server 1.16.3",
-    "bot_dir": "C:\\Users\\paulo\\Documents\\Projects\\Minecraft Stuff\\Server 1.16.3\\RogerioBot",
+    "server_dir": "C:\\Your\\Server\\Directory",
+    "bot_dir": "D:\\Your\\Bot\\Directory",
 
     "temp_stream": "logs\\stream\\temp_stream.txt",
     "error_dir": "logs\\errors\\errors.txt",
