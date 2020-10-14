@@ -1,5 +1,6 @@
 # Rogerio
 A Discord bot that turns on my minecraft server when I'm away.
+Don't mind the mess. It's a mess.
 
 To add this to your server, simply add "config.json" and add the following:
 
