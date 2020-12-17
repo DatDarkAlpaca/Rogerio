@@ -12,6 +12,8 @@ class ExtensionLoader(commands.Cog):
     def load_extensions(self):
         print('-= Cogs =-')
         for cog in listdir('cogs'):
+            if cog.startswith('_'):
+                continue
             if cog.endswith('.py') and cog not in self.config['ignored_cogs']:
                 try:
                     print('🤎 - {} is loaded!'.format(cog[:-3]))
